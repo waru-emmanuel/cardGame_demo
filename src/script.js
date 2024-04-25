@@ -1,87 +1,49 @@
-// Initialize deck and other variables
+// Initialize deck
 let deck = [];
-let player1Deck = [];
-let player2Deck = [];
+const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
+const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King', 'Ace'];
+
+// Add special cards to the deck
+deck.push({ value: 'Joker', suit: 'Special' });
+
+suits.forEach(suit => {
+    values.forEach(value => {
+        deck.push({ value, suit });
+    });
+});
+
+// Shuffle deck
+function shuffleDeck() {
+    for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+}
+
+shuffleDeck();
+
+// Distribute cards to players
+const player1Deck = deck.slice(0, 26);
+const player2Deck = deck.slice(26);
+
+const player1DeckElement = document.getElementById('player1Deck');
+const player2DeckElement = document.getElementById('player2Deck');
+const drawButton = document.getElementById('drawButton');
+const resultElement = document.getElementById('result');
+const player1ScoreElement = document.getElementById('player1Score');
+const player2ScoreElement = document.getElementById('player2Score');
+
 let player1Card, player2Card;
 let player1Score = 0;
 let player2Score = 0;
-let currentRound = 1;
-let numberOfRounds = parseInt(document.getElementById('rounds').value); // Get initial value from input
-let difficultyLevel = document.getElementById('difficulty').value; // Get initial value from select
-let includeSpecialCards = document.getElementById('specialCards').checked; // Get initial value from checkbox
 
-// Function to reset the game
-function resetGame() {
-    // Reset scores and round number
-    player1Score = 0;
-    player2Score = 0;
-    currentRound = 1;
-    document.getElementById('roundTracker').innerText = `Round: ${currentRound}`;
-    document.getElementById('player1Score').innerText = `Score: ${player1Score}`;
-    document.getElementById('player2Score').innerText = `Score: ${player2Score}`;
-    
-    // Reset result message
-    document.getElementById('result').innerText = '';
-
-    // Shuffle and distribute cards
-    shuffleDeck();
-    player1Deck = deck.slice(0, 26);
-    player2Deck = deck.slice(26);
-}
-
-// Function to handle drawing a card
-// Function to handle drawing a card
+// Draw card function
 function drawCard() {
-    // Adjust difficulty level logic
-    let drawProbability = 0.5; // Default draw probability
-    switch (difficultyLevel) {
-        case 'easy':
-            drawProbability = 0.7; // Higher probability of winning for player 1
-            break;
-        case 'medium':
-            drawProbability = 0.5; // Equal probability for both players
-            break;
-        case 'hard':
-            drawProbability = 0.3; // Higher probability of winning for player 2
-            break;
-        default:
-            drawProbability = 0.5;
-    }
+    player1Card = player1Deck.shift();
+    player2Card = player2Deck.shift();
 
-    // Draw cards
-    player1Card = drawCardWithProbability(player1Deck, drawProbability);
-    player2Card = drawCardWithProbability(player2Deck, drawProbability);
+    updateUI(); // Update UI after drawing cards
 
-    // Update UI and game state
-    updateUI();
-    updateGameState();
-}
-
-// Function to update UI elements
-function updateUI() {
-    // Update player 1 deck UI
-    document.getElementById('player1Deck').innerHTML = `
-        <div class="card">
-            <img src="images/${player1Card.suit}.png" alt="${player1Card.value} of ${player1Card.suit}">
-            <div class="card-value">${player1Card.value}</div>
-        </div>
-    `;
-    
-    // Update player 2 deck UI
-    document.getElementById('player2Deck').innerHTML = `
-        <div class="card">
-            <img src="images/${player2Card.suit}.png" alt="${player2Card.value} of ${player2Card.suit}">
-            <div class="card-value">${player2Card.value}</div>
-        </div>
-    `;
-
-    // Update player scores UI
-    document.getElementById('player1Score').innerText = `Score: ${player1Score}`;
-    document.getElementById('player2Score').innerText = `Score: ${player2Score}`;
-}
-
-// Function to update game state based on drawn cards
-function updateGameState() {
     if (compareCards(player1Card, player2Card) === 1) {
         player1Deck.push(player1Card, player2Card);
         player1Score++;
@@ -90,63 +52,70 @@ function updateGameState() {
         player2Score++;
     }
 
-    // Check for end of game
+    player1ScoreElement.innerText = `Score: ${player1Score}`;
+    player2ScoreElement.innerText = `Score: ${player2Score}`;
+
     if (player1Deck.length === 0 || player2Deck.length === 0) {
         endGame();
+        return;
     }
 }
 
+// Compare card values
+function compareCards(card1, card2) {
+    // Check if either card is a special card
+    if (card1.suit === 'Special' || card2.suit === 'Special') {
+        // Special cards win against non-special cards
+        if (card1.suit === 'Special' && card2.suit !== 'Special') {
+            return 1; // Player 1 wins
+        } else if (card1.suit !== 'Special' && card2.suit === 'Special') {
+            return -1; // Player 2 wins
+        } else {
+            return 0; // Both cards are special or neither are
+        }
+    }
 
-// Function to draw a card with a given probability
-function drawCardWithProbability(deck, probability) {
-    // Randomly determine if the card should be drawn based on the probability
-    if (Math.random() < probability) {
-        return deck.shift(); // Draw the card from the deck
+    // Regular card comparison
+    const valueIndex1 = values.indexOf(card1.value);
+    const valueIndex2 = values.indexOf(card2.value);
+
+    if (valueIndex1 > valueIndex2) {
+        return 1; // Player 1 wins
+    } else if (valueIndex1 < valueIndex2) {
+        return -1; // Player 2 wins
     } else {
-        // Simulate drawing a card from an empty deck if probability is not met
-        return { value: 'Empty', suit: 'Empty' };
+        return 0; // Draw
     }
 }
 
-// Function to handle including special cards
-function includeSpecialCardsLogic() {
-    if (includeSpecialCards) {
-        // Add special cards to the deck
+// Function to update UI elements
+function updateUI() {
+    // Update player 1 deck UI
+    player1DeckElement.innerHTML = `
+        <div class="card">
+            <img src="images/${player1Card.suit}.png" alt="${player1Card.value} of ${player1Card.suit}">
+            <div class="card-value">${player1Card.value}</div>
+        </div>
+    `;
 
-        deck.push({ value: 'Joker', suit: 'Special' });
-    }
+    // Update player 2 deck UI
+    player2DeckElement.innerHTML = `
+        <div class="card">
+            <img src="images/${player2Card.suit}.png" alt="${player2Card.value} of ${player2Card.suit}">
+            <div class="card-value">${player2Card.value}</div>
+        </div>
+    `;
 }
 
 // Function to end the game
 function endGame() {
-    // Display winner
-    let winner;
-    if (player1Score > player2Score) {
-        winner = 'Player 1';
-    } else if (player2Score > player1Score) {
-        winner = 'Player 2';
+    if (player1Deck.length === 0) {
+        resultElement.innerText = "Player 2 wins!";
     } else {
-        winner = 'It\'s a tie!';
+        resultElement.innerText = "Player 1 wins!";
     }
-    document.getElementById('result').innerText = `Game Over! ${winner} wins!`;
-    document.getElementById('drawButton').disabled = true; // Disable draw button
-}
-
-// Update game options
-function updateOptions() {
-    numberOfRounds = parseInt(document.getElementById('rounds').value);
-    difficultyLevel = document.getElementById('difficulty').value;
-    includeSpecialCards = document.getElementById('specialCards').checked;
+    drawButton.disabled = true;
 }
 
 // Event listener for draw button
-document.getElementById('drawButton').addEventListener('click', () => {
-    updateOptions(); // Update options before drawing card
-    drawCard();
-});
-
-// Reset game when the page loads
-window.onload = function() { 
-    includeSpecialCardsLogic();
-    resetGame(); // Optionally, reset the game when the page loads
-}
+drawButton.addEventListener('click', drawCard);
