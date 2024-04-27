@@ -43,6 +43,7 @@ To run the High Card Game locally on your machine, follow these steps:
 
 ## Credits
 
-This project was created by Brian. It is inspired by classic card games and is intended for educational purposes.
+This project was created by Brian and The Byte Brigade group. It is inspired by classic card games and is intended for educational purposes.
+Some features were added to make it more interesting.
 
 
